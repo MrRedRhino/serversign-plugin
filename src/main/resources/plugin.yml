@@ -1,0 +1,4 @@
+name: BetterServerSigns
+version: '${project.version}'
+main: org.pipeman.betterserversigns.BetterServerSigns
+api-version: 1.18
