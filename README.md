@@ -18,3 +18,5 @@ servername: (exakt wie in der proxy)
     - "line 3; benutze {} als Platzhalter für die Spieleranzahl"
     - "line 4; benutze § als farb-code prefix, z.B. §c > Rot"
 ```
+
+`/reload confirm`um die config neu zu laden
