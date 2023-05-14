@@ -12,23 +12,23 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.messaging.PluginMessageListener;
+import org.bukkit.util.BlockVector;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class SendPlayer implements Listener, PluginMessageListener {
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
-        if (event.getClickedBlock() == null) return;
-        if (Tag.SIGNS.isTagged(event.getClickedBlock().getType())) {
+        if (event.getClickedBlock() == null || !Tag.SIGNS.isTagged(event.getClickedBlock().getType())) return;
+        BlockVector clickVector = event.getClickedBlock().getLocation().toVector().toBlockVector();
 
-            for (String serverName : BetterServerSigns.signs.keySet()) {
-                if (BetterServerSigns.signs.get(serverName).toBlockVector()
-                        .equals(event.getClickedBlock().getLocation().toVector().toBlockVector())) {
-                    Util.sendPlayer(serverName, event.getPlayer());
-                }
+        for (Map.Entry<String, BlockVector> entry : BetterServerSigns.signs.entrySet()) {
+            if (entry.getValue().toBlockVector().equals(clickVector)) {
+                Util.sendPlayer(entry.getKey(), event.getPlayer());
+                return;
             }
         }
     }
@@ -37,22 +37,22 @@ public class SendPlayer implements Listener, PluginMessageListener {
     public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, byte[] message) {
         ByteArrayDataInput in = ByteStreams.newDataInput(message);
 
-        if (in.readUTF().equals("PlayerCount")) {
-            String serverName = in.readUTF();
-            int playerCount = in.readInt();
+        if (!in.readUTF().equals("PlayerCount")) return;
 
-            Location signLoc = BetterServerSigns.signs.get(serverName).toLocation(player.getWorld());
+        String serverName = in.readUTF();
+        String playerCount = String.valueOf(in.readInt());
 
-            ArrayList<Component> lines = new ArrayList<>(Arrays.asList(
-                    Component.text(ChatColor.translateAlternateColorCodes('§', BetterServerSigns.texts.get(serverName).get(0).replace("{}", playerCount + ""))),
-                    Component.text(ChatColor.translateAlternateColorCodes('§', BetterServerSigns.texts.get(serverName).get(1).replace("{}", playerCount + ""))),
-                    Component.text(ChatColor.translateAlternateColorCodes('§', BetterServerSigns.texts.get(serverName).get(2).replace("{}", playerCount + ""))),
-                    Component.text(ChatColor.translateAlternateColorCodes('§', BetterServerSigns.texts.get(serverName).get(3).replace("{}", playerCount + "")))
-            ));
+        List<String> serverTexts = BetterServerSigns.texts.get(serverName);
+        List<Component> lines = List.of(
+                Component.text(ChatColor.translateAlternateColorCodes('§', serverTexts.get(0).replace("{}", playerCount))),
+                Component.text(ChatColor.translateAlternateColorCodes('§', serverTexts.get(1).replace("{}", playerCount))),
+                Component.text(ChatColor.translateAlternateColorCodes('§', serverTexts.get(2).replace("{}", playerCount))),
+                Component.text(ChatColor.translateAlternateColorCodes('§', serverTexts.get(3).replace("{}", playerCount)))
+        );
 
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                p.sendSignChange(signLoc, lines);
-            }
+        Location signLoc = BetterServerSigns.signs.get(serverName).toLocation(player.getWorld());
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            p.sendSignChange(signLoc, lines);
         }
     }
 }

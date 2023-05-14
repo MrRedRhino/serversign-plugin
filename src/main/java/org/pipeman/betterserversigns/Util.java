@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 
 public class Util {
     static void sendPlayer(String server, Player player) {
+        player.sendMessage("Sending you to " + server + "...");
         ByteArrayDataOutput dataOutput = ByteStreams.newDataOutput();
         dataOutput.writeUTF("Connect");
         dataOutput.writeUTF(server);
